@@ -13,7 +13,7 @@
 # USER INPUT: Gender----------------
 # User inputs gender here; 'women' or 'open'
 gender = 'open'
-write_csvs = TRUE
+write_csvs = FALSE
 
 # Preload----------------------
 # A custom preload script is sourced here to load in necessary packages and functions
@@ -78,7 +78,7 @@ counter = 0
 for(d in 2){
   gender = c('women', 'open')[d]
   for(ty in 1:1){
-    target_years = list(2023)[[ty]]
+    target_years = list(2021:2023)[[ty]]
     # cat(target_years)
     # cat(gender)
     for(yd in seq(1, 1, by = .25)){
@@ -262,7 +262,7 @@ for(d in 2){
         player_ratings = list()
         player_ratings_split = list()
         
-        for(i in 1:length(tourney_list)){
+        for(i in length(tourney_list):length(tourney_list)){
           cat('\n\nTourney: ', tourney_list[i])  # Readout
           
           # This is the holdout training dataset where we include all scores EXCEPT that of the target tourney
@@ -291,7 +291,7 @@ for(d in 2){
             cat('\nFitting Sequential...')
             
             # Sequential Model Fit
-            sequential_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + (1|mT2P1) + (1|mT2P2)-1, data = train_dat_sequential, family = binomial(link = "logit"), weights = Weight)
+            sequential_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + (1|mT1P2) + (1|mT2P1) + (1|mT2P2)-1, data = train_dat_sequential, family = binomial(link = "logit"), weights = Weight)
             
             # Creating player ranks based on the above model
             sequential_ranks = ranef(sequential_lme) %>% 
@@ -440,7 +440,7 @@ for(d in 2){
           cat('\nFitting Holdout...')
           
           # Sequential Model Fit
-          holdout_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + (1|mT2P1) + (1|mT2P2)-1, data = train_dat_holdout, family = binomial(link = "logit"), weights = Weight)
+          holdout_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + (1|mT1P2)+ (1|mT2P1) + (1|mT2P2)-1, data = train_dat_holdout, family = binomial(link = "logit"), weights = Weight)
           
           # Creating player ranks based on the above model
           holdout_ranks = ranef(holdout_lme) %>% 
