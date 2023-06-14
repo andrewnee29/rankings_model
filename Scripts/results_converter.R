@@ -5,6 +5,16 @@
 manual_downloads = data.frame(`Fwango File Title` = gsub(".csv", "", dir('Tourney Results/Manual Downloads')),
                               downloaded = T)
 
+sheet_scrape = drive_find(type = "spreadsheet") %>%
+  filter(name == 'Fwango URLs')
+
+sheet_scrape2 = read_sheet(sheet_scrape$id,
+                           col_types = 'c') %>%
+  as.data.frame()%>% 
+  mutate(tourney = toupper(`URL identifier`),
+         Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
+  add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+7))
+
 tourney_status =  sheet_scrape2 %>% 
   select(Year, Date, `For Model Use`, `URL identifier`, tourney, `Fwango File Title`) %>% 
   left_join(
