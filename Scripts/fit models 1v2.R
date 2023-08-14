@@ -13,7 +13,7 @@
 # USER INPUT: Gender----------------
 # User inputs gender here; 'women' or 'open'
 gender = 'open'
-write_csvs = FALSE
+write_csvs = T
 
 # Preload----------------------
 # A custom preload script is sourced here to load in necessary packages and functions
@@ -37,7 +37,7 @@ sheet_scrape2 = read_sheet(sheet_scrape$id,
   as.data.frame()%>% 
   mutate(tourney = toupper(`URL identifier`),
          Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
-  add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+7))
+  add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+1))
 
 
 eligible_players_sheet = drive_find(type = "spreadsheet") %>%
@@ -76,7 +76,7 @@ results = list()
 counter = 0
 #Looper
 for(d in 2){
-  gender = c('women', 'open')[d]
+  # gender = c('women', 'open')[d]
   for(ty in 1:1){
     target_years = list(2021:2023)[[ty]]
     # cat(target_years)
@@ -102,7 +102,8 @@ for(d in 2){
           filter(Division != '') %>% 
           select(Date, tourney, Division) %>% 
           mutate(valid = T) %>% 
-          mutate_all(toupper)
+          mutate_all(toupper) %>% 
+          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(as.Date(max(.$Date))+1)))
         
         
         # Here we pull and combine the scraped csvs from those tournaments and divisions
@@ -144,7 +145,7 @@ for(d in 2){
           mutate(T2P2 = case_when(!is.na(NewName) ~ NewName,
                                   TRUE ~ T2P2)) %>% 
           select(-NewName) %>% 
-          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(as.Date(max(.$Date))+7))) %>% 
+          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(as.Date(max(.$Date))+1))) %>%
           arrange(Date) %>% 
           mutate(game_id = row_number()) %>% 
           filter(!(game_id %in% c(193, 194)))
@@ -174,7 +175,7 @@ for(d in 2){
           mutate(T2P2 = case_when(!is.na(NewName) ~ NewName,
                                   TRUE ~ T2P2)) %>% 
           select(-NewName) %>% 
-          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(max(as.Date(.$Date)+7))))
+          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(max(as.Date(.$Date)+1))))
         
         # Here we expand the dataset such that each player appears in each of the player slots T1P1, T2P1, T1P2, T2P2 such that ordering effects are minimized
         expanded_fulldata = full_data %>% 
@@ -262,7 +263,7 @@ for(d in 2){
         player_ratings = list()
         player_ratings_split = list()
         
-        for(i in length(tourney_list):length(tourney_list)){
+        for(i in 1:length(tourney_list)){
           cat('\n\nTourney: ', tourney_list[i])  # Readout
           
           # This is the holdout training dataset where we include all scores EXCEPT that of the target tourney
@@ -276,6 +277,7 @@ for(d in 2){
           # This is the sequential training dataset where we include all scores BEFORE that of the target tourney
           train_dat_sequential =  expanded_fulldata %>% 
             filter(tourney %in% c(tourney_list[1:i])) %>% 
+            filter(Date >= (max(as.Date(Date), na.rm = T) - 365)) %>% 
             mutate(mT1_score = case_when(tourney == tourney_list[i] ~ NA_integer_,
                                          TRUE ~ mT1_score),
                    mT2_score = case_when(tourney == tourney_list[i] ~ NA_integer_,
@@ -291,7 +293,9 @@ for(d in 2){
             cat('\nFitting Sequential...')
             
             # Sequential Model Fit
-            sequential_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + (1|mT1P2) + (1|mT2P1) + (1|mT2P2)-1, data = train_dat_sequential, family = binomial(link = "logit"), weights = Weight)
+            sequential_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + 
+                                     # (1|mT1P2) + 
+                                     (1|mT2P1) + (1|mT2P2)-1, data = train_dat_sequential, family = binomial(link = "logit"), weights = Weight)
             
             # Creating player ranks based on the above model
             sequential_ranks = ranef(sequential_lme) %>% 
@@ -321,7 +325,7 @@ for(d in 2){
                           select(Name, opp2PAAWA = score),
                         by = c('mT2P2' = 'Name')) %>% 
               group_by(mT1P1) %>% 
-              summarize(n = n(),
+              summarize(n = sum(!is.na(mT1_result)),
                         partner_strength = mean(partnerPAAWA, na.rm = T),
                         opp_strength = mean(c(opp1PAAWA, opp2PAAWA), na.rm = T),
               )
@@ -337,7 +341,8 @@ for(d in 2){
               left_join(train_dat_sequential %>% 
                           pivot_longer(c(mT1P1:mT2P2), values_to = 'player') %>% 
                           group_by(player) %>% 
-                          summarize(n = n_distinct(tourney)),
+                          summarize(n_tourneys_365 = n_distinct(tourney),
+                                    n_tourneys_curr_season = n_distinct(tourney[substr(Date, 1, 4)==substr(max(train_dat_sequential$Date),1, 4)])),
                         by = c('Name' = 'player')) %>% 
               
               left_join(qual_tourneys %>% 
@@ -345,16 +350,21 @@ for(d in 2){
                         by = 'tourney') %>%
               left_join(train_dat_sequential %>% 
                           group_by(mT1P1) %>% 
-                          summarize(std_wins = sum(mT1_result == 1, na.rm = T)/2,
-                                    std_losses = sum(mT1_result == 0, na.rm = T)/2),
+                          summarize(games_365 = sum(mT1_result %in% c(1, 0), na.rm = T)/2,
+                                    wins_365 = sum(mT1_result == 1, na.rm = T)/2,
+                                    losses_365 = sum(mT1_result == 0, na.rm = T)/2,
+                                    points_for_365 = sum(mT1_score, na.rm = T)/2,
+                                    points_against_365 = sum(mT2_score, na.rm = T)/2,
+                                    avg_point_diff = (points_for_365 - points_against_365)/games_365),
                         by = c('Name' = 'mT1P1')) %>% 
               left_join(test_dat %>% 
                           group_by(mT1P1) %>% 
-                          summarize(teammate = first(mT1P2),
+                          summarize(tourney_teammate = first(mT1P2),
                                     tourney_wins = sum(mT1_result == 1, na.rm = T)/2,
                                     tourney_losses = sum(mT1_result == 0, na.rm = T)/2),
                         by = c('Name' = 'mT1P1')) %>% 
-              left_join(std_sos,
+              left_join(std_sos %>% 
+                          select(-n),
                         by = c('Name' = 'mT1P1')) %>% 
               mutate(PAAWA = case_when(is.na(PAAWA) ~ .5,
                                        TRUE ~ PAAWA),
@@ -419,19 +429,24 @@ for(d in 2){
               left_join(train_dat_sequential %>% 
                           pivot_longer(c(mT1P1:mT2P2), values_to = 'player') %>% 
                           group_by(player) %>% 
-                          summarize(n = n_distinct(tourney)),
+                          summarize(n = n_distinct(tourney),
+                                    year_n = n_distinct(tourney[substr(Date, 1, 4)]==substr(max(train_dat_sequential$Date),1, 4))),
                         by = c('Name' = 'player')) %>% 
               mutate(tourney = tourney_list[i]) %>% 
               left_join(qual_tourneys,
                         by = 'tourney') %>% 
               left_join(train_dat_sequential %>% 
                           group_by(mT1P1) %>% 
-                          summarize(std_wins = sum(mT1_result == 1, na.rm = T)/2,
-                                    std_losses = sum(mT1_result == 0, na.rm = T)/2),
+                          summarize(games_365 = sum(mT1_result %in% c(1, 0), na.rm = T)/2,
+                                      wins_365 = sum(mT1_result == 1, na.rm = T)/2,
+                                    losses_365 = sum(mT1_result == 0, na.rm = T)/2,
+                                    points_for_365 = sum(mT1_score, na.rm = T)/2,
+                                    points_against_365 = sum(mT2_score, na.rm = T)/2,
+                                    avg_point_diff = (points_for_365 - points_against_365)/games_365),
                         by = c('Name' = 'mT1P1')) %>% 
               left_join(test_dat %>% 
                           group_by(mT1P1) %>% 
-                          summarize(teammate = first(mT1P2),
+                          summarize(tourney_teammate = first(mT1P2),
                                     tourney_wins = sum(mT1_result == 1, na.rm = T)/2,
                                     tourney_losses = sum(mT1_result == 0, na.rm = T)/2),
                         by = c('Name' = 'mT1P1'))
@@ -440,7 +455,9 @@ for(d in 2){
           cat('\nFitting Holdout...')
           
           # Sequential Model Fit
-          holdout_lme = glmer(mT1_result ~ Constant + (1|mT1P1) + (1|mT1P2)+ (1|mT2P1) + (1|mT2P2)-1, data = train_dat_holdout, family = binomial(link = "logit"), weights = Weight)
+          holdout_lme = glmer(mT1_result ~ Constant + (1|mT1P1)
+                              # + (1|mT1P2)+ (1|mT2P1) + (1|mT2P2)
+                              -1, data = train_dat_holdout, family = binomial(link = "logit"), weights = Weight)
           
           # Creating player ranks based on the above model
           holdout_ranks = ranef(holdout_lme) %>% 
@@ -616,14 +633,14 @@ for(d in 2){
 # Create Previous Week rankings for trend tracking purposes ---------------------
 prev_ranks = player_ratings_df %>%
   filter(tourney == tourney_list[length(tourney_list) - 1]) %>% 
-  select(Name:PAAWA, std_wins:std_losses, n_tourneys = n.x, partner_strength:opp_strength) %>%
+  select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
   left_join(usar_players %>% 
               {if(gender == 'women') filter(., Gender == 'Female') else .} %>% 
               transmute(Name = toupper(`Full name`),
                         `USA Player?`),
             by = 'Name') %>% 
-  filter(`USA Player?` == 'Y',
-         n_tourneys > 1) %>%
+  filter(#`USA Player?` == 'Y',
+         n_tourneys_curr_season > 1) %>%
   distinct() %>% 
   mutate(player_rank_t = rank(-PAAWA),
          player_rank = case_when(player_rank_t %% 1 == .5 ~ paste0('T', floor(player_rank_t)),
@@ -633,14 +650,14 @@ prev_ranks = player_ratings_df %>%
 # Bind previous week and convert to 100-scaled score rankings table ------------------
 ranks = player_ratings_df %>%
   filter(tourney == 'END OF SEASON') %>% 
-  select(Name:PAAWA, std_wins:std_losses, n_tourneys = n.x, partner_strength:opp_strength) %>%
+  select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
   left_join(usar_players %>% 
               {if(gender == 'women') filter(., Gender == 'Female') else .} %>% 
               transmute(Name = toupper(`Full name`),
                         `USA Player?`),
             by = 'Name') %>% 
-  filter(`USA Player?` == 'Y',
-         n_tourneys > 1) %>%
+  filter(#`USA Player?` == 'Y',
+         n_tourneys_curr_season > 1) %>%
   mutate(player_rank_t = rank(-PAAWA),
          player_rank = case_when(player_rank_t %% 1 == .5 ~ paste0('T', floor(player_rank_t)),
                                  TRUE ~ as.character(player_rank_t)),
@@ -650,7 +667,7 @@ ranks = player_ratings_df %>%
          
   ) %>% 
   left_join(prev_ranks, by = 'Name') %>% 
-  select(Name, Score = adj_score, std_wins:n_tourneys, Avg_Partner_Score = adj_partner, Avg_Opponent_Score = adj_opp, player_rank, prev_rank) %>% 
+  select(Name, Score = adj_score, wins_365:n_tourneys_curr_season, Avg_Partner_Score = adj_partner, Avg_Opponent_Score = adj_opp, player_rank, prev_rank) %>%
   distinct()
 
 
@@ -658,14 +675,14 @@ ranks = player_ratings_df %>%
 youth_ranks = player_ratings_df %>%
   filter(Name %in% youth_players$Name) %>% 
   filter(tourney == 'END OF SEASON') %>% 
-  select(Name:PAAWA, std_wins:std_losses, n_tourneys = n.x, partner_strength:opp_strength) %>%
+  select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
   left_join(usar_players %>% 
               {if(gender == 'women') filter(., Gender == 'Female') else .} %>% 
               transmute(Name = toupper(`Full name`),
                         `USA Player?`),
             by = 'Name') %>% 
-  filter(`USA Player?` == 'Y',
-         n_tourneys > 1) %>%
+  filter(#`USA Player?` == 'Y',
+         n_tourneys_curr_season > 1) %>%
   mutate(player_rank_t = rank(-PAAWA),
          player_rank = case_when(player_rank_t %% 1 == .5 ~ paste0('T', floor(player_rank_t)),
                                  TRUE ~ as.character(player_rank_t)),
@@ -675,7 +692,7 @@ youth_ranks = player_ratings_df %>%
          
   ) %>% 
   left_join(prev_ranks, by = 'Name') %>% 
-  select(Name, Score = adj_score, std_wins:n_tourneys, Avg_Partner_Score = adj_partner, Avg_Opponent_Score = adj_opp, player_rank, prev_rank) %>% 
+  select(Name, Score = adj_score, wins_365:n_tourneys_curr_season, Avg_Partner_Score = adj_partner, Avg_Opponent_Score = adj_opp, player_rank, prev_rank) %>%
   distinct()
 
 
@@ -684,17 +701,17 @@ youth_ranks = player_ratings_df %>%
 
 if(write_csvs){
   if(gender == 'women'){
-    write.csv(pred_df, file = 'Predictions/2023/Women/pred_1v2_df.csv', row.names = F)
-    write.csv(ranks, file = 'Predictions/2023/Women/player_ratings_1v2_df.csv', row.names = F)
-    write.csv(youth_ranks, file = 'Predictions/2023/Women/youth_player_ratings_1v2_df.csv', row.names = F)
-    write.csv(player_ratings_df, file = 'Predictions/2023/Women/player_ratings_1v2_df_full.csv', row.names = F)
-    write.csv(ranks, file = paste0('Predictions/2023/Women/player_ratings_1v2_df_', Sys.Date(), '.csv'), row.names = F)
+    readr::write_excel_csv(pred_df, file = 'Predictions/2023/Women/pred_1v2_df.csv')
+    readr::write_excel_csv(ranks, file = 'Predictions/2023/Women/player_ratings_1v2_df.csv')
+    readr::write_excel_csv(youth_ranks, file = 'Predictions/2023/Women/youth_player_ratings_1v2_df.csv')
+    readr::write_excel_csv(player_ratings_df, file = 'Predictions/2023/Women/player_ratings_1v2_df_full.csv')
+    readr::write_excel_csv(ranks, file = paste0('Predictions/2023/Women/player_ratings_1v2_df_', Sys.Date(), '.csv'))
   }
   if(gender == 'open'){
-    write.csv(pred_df, file = 'Predictions/2023/Open/pred_1v2_df.csv', row.names = F)
-    write.csv(ranks, file = 'Predictions/2023/Open/player_ratings_1v2_df.csv', row.names = F)
-    write.csv(youth_ranks, file = 'Predictions/2023/Open/youth_player_ratings_1v2_df.csv', row.names = F)
-    write.csv(player_ratings_df, file = 'Predictions/2023/Open/player_ratings_1v2_df_full.csv', row.names = F)
-    write.csv(ranks, file = paste0('Predictions/2023/Open/player_ratings_1v2_df_', Sys.Date(), '.csv'), row.names = F)
+    readr::write_excel_csv(pred_df, file = 'Predictions/2023/Open/pred_1v2_df.csv')
+    readr::write_excel_csv(ranks, file = 'Predictions/2023/Open/player_ratings_1v2_df.csv')
+    readr::write_excel_csv(youth_ranks, file = 'Predictions/2023/Open/youth_player_ratings_1v2_df.csv')
+    readr::write_excel_csv(player_ratings_df, file = 'Predictions/2023/Open/player_ratings_1v2_df_full.csv')
+    readr::write_excel_csv(ranks, file = paste0('Predictions/2023/Open/player_ratings_1v2_df_', Sys.Date(), '.csv'))
   }
 }
