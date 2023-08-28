@@ -12,7 +12,7 @@
 
 # USER INPUT: Gender----------------
 # User inputs gender here; 'women' or 'open'
-gender = 'open'
+gender = 'women'
 write_csvs = T
 
 # Preload----------------------
