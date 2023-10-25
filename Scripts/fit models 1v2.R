@@ -12,7 +12,7 @@
 
 # USER INPUT: Gender----------------
 # User inputs gender here; 'women' or 'open'
-gender = 'open'
+gender = 'women'
 write_csvs = T
 
 # Preload----------------------
@@ -29,15 +29,17 @@ set.seed(1)
 # 1. Fwango URLs that includes tournament titles, URLs, and model use status
 # 2. USA Roundnet Membership_Rankings Committee Filtered List, which (is supposed to) show membership and USA status for all players
 
-sheet_scrape = drive_find(type = "spreadsheet") %>%
-  filter(name == 'Fwango URLs')
+# sheet_scrape = drive_find(type = "spreadsheet") %>%
+#   filter(name == 'Fwango URLs')
+# 
+# sheet_scrape2 = read_sheet(sheet_scrape$id,
+#                            col_types = 'c') %>%
+#   as.data.frame()%>% 
+#   mutate(tourney = toupper(`URL identifier`),
+#          Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
+#   add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+1))
 
-sheet_scrape2 = read_sheet(sheet_scrape$id,
-                           col_types = 'c') %>%
-  as.data.frame()%>% 
-  mutate(tourney = toupper(`URL identifier`),
-         Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
-  add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+1))
+sheet_scrape2 = read.csv('Tourney List.csv', as.is = T)
 
 
 eligible_players_sheet = drive_find(type = "spreadsheet") %>%
@@ -94,10 +96,10 @@ for(d in 2){
         
         # Here we determine which tournaments/divisions should count towards the model.
         qual_tourneys = sheet_scrape2 %>% 
-          filter(`For Model Use` == 'X',
+          filter(`For.Model.Use` == 'X',
                  Year %in% target_years) %>% 
-          {if(gender == 'open') select(., Date, tourney, `Open Division 1`:`Open Division 3`) else .} %>% 
-          {if(gender == 'women') select(., Date, tourney, `Women Division 1`) else .} %>% 
+          {if(gender == 'open') select(., Date, tourney, `Open.Division .1`:`Open.Division.3`) else .} %>% 
+          {if(gender == 'women') select(., Date, tourney, `Women.Division.1`) else .} %>% 
           pivot_longer(!c(tourney, Date), names_to = 'd', values_to = 'Division') %>% 
           filter(Division != '') %>% 
           select(Date, tourney, Division) %>% 

@@ -5,18 +5,23 @@
 manual_downloads = data.frame(`Fwango File Title` = gsub(".csv", "", dir('Tourney Results/Manual Downloads')),
                               downloaded = T)
 
-sheet_scrape = drive_find(type = "spreadsheet") %>%
-  filter(name == 'Fwango URLs')
+# sheet_scrape = drive_find(type = "spreadsheet") %>%
+#   filter(name == 'Fwango URLs')
+# 
+# sheet_scrape2 = read_sheet(sheet_scrape$id,
+#                            col_types = 'c') %>%
+#   as.data.frame()%>% 
+#   mutate(tourney = toupper(`URL identifier`),
+#          Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
+#   add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+7))
+# 
+# 
+# write.csv(sheet_scrape2, file = 'Tourney List.csv', col)
 
-sheet_scrape2 = read_sheet(sheet_scrape$id,
-                           col_types = 'c') %>%
-  as.data.frame()%>% 
-  mutate(tourney = toupper(`URL identifier`),
-         Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
-  add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+7))
+sheet_scrape2 = read.csv('Tourney List.csv', as.is = T)
 
 tourney_status =  sheet_scrape2 %>% 
-  select(Year, Date, `For Model Use`, `URL identifier`, tourney, `Fwango File Title`) %>% 
+  select(Year, Date, `For Model Use` = 'For.Model.Use', `URL identifier` = 'URL.identifier', tourney, `Fwango File Title` = 'Fwango.File.Title') %>% 
   left_join(
     data.frame(URL.identifier = toupper(gsub(".csv", "", dir('Tourney Results'))),
                complete = T) %>% 
@@ -32,6 +37,9 @@ to_do_list = tourney_status %>%
 
 
 for(td in 1:nrow(to_do_list)){
+  if(nrow(to_do_list) == 0){
+    next
+  }
   file_name = file.path('Tourney Results', 'Manual Downloads', paste0(to_do_list$`Fwango File Title`[td], ".csv"))
   cat('\n', file_name)
   downloaded_dat = read.csv(file_name, as.is = T) %>% 
