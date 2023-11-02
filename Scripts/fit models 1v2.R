@@ -12,7 +12,7 @@
 
 # USER INPUT: Gender----------------
 # User inputs gender here; 'women' or 'open'
-gender = 'women'
+gender = 'open'
 write_csvs = T
 
 # Preload----------------------
@@ -98,7 +98,7 @@ for(d in 2){
         qual_tourneys = sheet_scrape2 %>% 
           filter(`For.Model.Use` == 'X',
                  Year %in% target_years) %>% 
-          {if(gender == 'open') select(., Date, tourney, `Open.Division .1`:`Open.Division.3`) else .} %>% 
+          {if(gender == 'open') select(., Date, tourney, `Open.Division.1`:`Open.Division.3`) else .} %>% 
           {if(gender == 'women') select(., Date, tourney, `Women.Division.1`) else .} %>% 
           pivot_longer(!c(tourney, Date), names_to = 'd', values_to = 'Division') %>% 
           filter(Division != '') %>% 
