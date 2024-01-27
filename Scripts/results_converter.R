@@ -5,17 +5,17 @@
 manual_downloads = data.frame(`Fwango File Title` = gsub(".csv", "", dir('Tourney Results/Manual Downloads')),
                               downloaded = T)
 
-sheet_scrape = drive_find(type = "spreadsheet") %>%
-  filter(name == 'Fwango URLs')
-
-sheet_scrape2 = read_sheet(sheet_scrape$id,
-                           col_types = 'c') %>%
-  as.data.frame()%>%
-  mutate(tourney = toupper(`URL identifier`),
-         Date = as.Date(Date, format = '%m/%d/%Y'))
-
-
-write.csv(sheet_scrape2, file = 'Tourney List.csv')
+# sheet_scrape = drive_find(type = "spreadsheet") %>%
+#   filter(name == 'Fwango URLs')
+# 
+# sheet_scrape2 = read_sheet(sheet_scrape$id,
+#                            col_types = 'c') %>%
+#   as.data.frame()%>%
+#   mutate(tourney = toupper(`URL identifier`),
+#          Date = as.Date(Date, format = '%m/%d/%Y'))
+# 
+# 
+# write.csv(sheet_scrape2, file = 'Tourney List.csv')
 
 sheet_scrape2 = read.csv('Tourney List.csv', as.is = T) %>%
   mutate(Date = as.Date(Date, format = '%m/%d/%Y')) %>%

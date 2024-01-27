@@ -105,7 +105,8 @@ for(d in 2){
           select(Date, tourney, Division) %>% 
           mutate(valid = T) %>% 
           mutate_all(toupper) %>% 
-          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(as.Date(max(.$Date))+1)))
+          mutate(Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
+          add_row(data.frame(tourney = 'END OF SEASON', Date = as.Date(max(.$Date))+1))
         
         
         # Here we pull and combine the scraped csvs from those tournaments and divisions
@@ -120,9 +121,11 @@ for(d in 2){
           tg[[i]] = read.csv(paste0('Tourney Results/', files[i]), as.is = T, stringsAsFactors = F, fileEncoding="UTF-8")
         }
         
+        forfeit_exceptions = c('USAR2023NATIONALS')
+        
         dat = bind_rows(tg) %>% 
           mutate_at(vars(tourney:T2P2), toupper) %>% 
-          filter(!((t1score %in% c(-1, -2) & t2score == 0) | (t2score %in% c(-1, -2) & t1score == 0)))
+          filter(tourney %in% forfeit_exceptions | !((t1score %in% c(-1, -2) & t2score == 0) | (t2score %in% c(-1, -2) & t1score == 0)))
         
         # Filtering to valid tourney and division, applying name corrections, and adding a dummy "END OF SEASON" tournament
         pp = dat %>% 
@@ -147,7 +150,8 @@ for(d in 2){
           mutate(T2P2 = case_when(!is.na(NewName) ~ NewName,
                                   TRUE ~ T2P2)) %>% 
           select(-NewName) %>% 
-          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(as.Date(max(.$Date))+1))) %>%
+          mutate(Date = as.Date(Date, format = '%m/%d/%Y')) %>% 
+          add_row(data.frame(tourney = 'END OF SEASON', Date = (as.Date(max(.$Date))+1))) %>%
           arrange(Date) %>% 
           mutate(game_id = row_number()) %>% 
           filter(!(game_id %in% c(193, 194)))
@@ -177,7 +181,7 @@ for(d in 2){
           mutate(T2P2 = case_when(!is.na(NewName) ~ NewName,
                                   TRUE ~ T2P2)) %>% 
           select(-NewName) %>% 
-          add_row(data.frame(tourney = 'END OF SEASON', Date = as.character(max(as.Date(.$Date)+1))))
+          add_row(data.frame(tourney = 'END OF SEASON', Date = (max(as.Date(.$Date)+1))))
         
         # Here we expand the dataset such that each player appears in each of the player slots T1P1, T2P1, T1P2, T2P2 such that ordering effects are minimized
         expanded_fulldata = full_data %>% 
