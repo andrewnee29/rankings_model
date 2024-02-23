@@ -80,7 +80,7 @@ counter = 0
 for(d in 2){
   # gender = c('women', 'open')[d]
   for(ty in 1:1){
-    target_years = list(2021:2023)[[ty]]
+    target_years = list(2021:2024)[[ty]]
     # cat(target_years)
     # cat(gender)
     for(yd in seq(1, 1, by = .25)){
