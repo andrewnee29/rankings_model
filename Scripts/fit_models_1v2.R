@@ -33,7 +33,7 @@ project_directory = myArgs[3]
 setwd(project_directory)
 
 # Loading the enviroment and turning warnings back on
-source('src/utils/Preload.R')
+source('Scripts/Preload.R')
 options(warn = defaultW)
 cat("\nFinished R env setup\n")
 

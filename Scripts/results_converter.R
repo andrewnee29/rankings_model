@@ -1,6 +1,7 @@
 #Fwango Results Converter------------
 #Takes manually downloaded csvs and converts into standar format
 #Reads from Tourney Results/Manual Downloads and writes to Tourney Results as .csv
+source('Scripts/Preload.R')
 
 manual_downloads = data.frame(`Fwango File Title` = gsub(".csv", "", dir('Tourney Results/Manual Downloads')),
                               downloaded = T)
