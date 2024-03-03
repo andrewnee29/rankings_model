@@ -657,11 +657,11 @@ prev_ranks = player_ratings_df %>%
 ranks = player_ratings_df %>%
   filter(tourney == 'END OF SEASON') %>% 
   select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
-  left_join(usar_players %>% 
-              {if(gender == 'women') filter(., Gender == 'Female') else .} %>% 
-              transmute(Name = toupper(`Full name`),
-                        `USA Player?`),
-            by = 'Name') %>% 
+  # left_join(usar_players %>%
+  #            {if(gender == 'women') filter(., Gender == 'Female') else .} %>%
+  #             transmute(Name = toupper(`Full name`),
+  #                       `USA Player?`),
+  #           by = 'Name') %>%
   filter(#`USA Player?` == 'Y',
          n_tourneys_curr_season > 1) %>%
   mutate(player_rank_t = rank(-PAAWA),
@@ -682,11 +682,11 @@ youth_ranks = player_ratings_df %>%
   filter(Name %in% youth_players$Name) %>% 
   filter(tourney == 'END OF SEASON') %>% 
   select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
-  left_join(usar_players %>% 
-              {if(gender == 'women') filter(., Gender == 'Female') else .} %>% 
-              transmute(Name = toupper(`Full name`),
-                        `USA Player?`),
-            by = 'Name') %>% 
+  # left_join(usar_players %>%
+  #             {if(gender == 'women') filter(., Gender == 'Female') else .} %>%
+  #             transmute(Name = toupper(`Full name`),
+  #                       `USA Player?`),
+  #           by = 'Name') %>%
   filter(#`USA Player?` == 'Y',
          n_tourneys_curr_season > 1) %>%
   mutate(player_rank_t = rank(-PAAWA),
