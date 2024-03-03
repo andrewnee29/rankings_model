@@ -17,25 +17,7 @@ write_csvs = T
 
 # Preload----------------------
 # A custom preload script is sourced here to load in necessary packages and functions
-# This file is called from the DAG directory so keep that in mind when creating relative references
-# Turning off package warning print statements
-defaultW <- getOption("warn")
-options(warn = -1)
-
-# Reading in arguments from the python runner
-myArgs <- commandArgs(trailingOnly = TRUE)
-dag_id = myArgs[1]
-run_id = myArgs[2]
-project_directory = myArgs[3]
-
-# Updating the working directory to be the top level folder of the repo
-# (So you can call this directly when running the python script or indirectly from terminal)
-setwd(project_directory)
-
-# Loading the enviroment and turning warnings back on
 source('Scripts/Preload.R')
-options(warn = defaultW)
-cat("\nFinished R env setup\n")
 
 # Seed Set-------------------
 # Seed is set to 1 for consistent retroactive comparisons (should have a marginal effect on mixed model fitting)
