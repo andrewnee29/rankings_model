@@ -37,7 +37,7 @@ jobs:
         run: Rscript Scripts/results_converter.R
 
       - name: Run Rankings Model & Generate New Rankings
-        run: Rscript Scripts/fit models 1v2.R
+        run: Rscript "Scripts/fit models 1v2.R"
 
       - name: Stage Changes
         run: git add Predictions/*
