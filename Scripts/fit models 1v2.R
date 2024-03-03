@@ -42,11 +42,11 @@ set.seed(1)
 sheet_scrape2 = read.csv('Tourney List.csv', as.is = T)
 
 
-eligible_players_sheet = drive_find(type = "spreadsheet") %>%
-  filter(name == 'USA Roundnet Membership_Rankings Committee Filtered List')
+# eligible_players_sheet = drive_find(type = "spreadsheet") %>%
+#  filter(name == 'USA Roundnet Membership_Rankings Committee Filtered List')
 
-usar_players = read_sheet(eligible_players_sheet$id,
-                          col_types = 'c') %>%
+# usar_players = read_sheet(eligible_players_sheet$id,
+#                          col_types = 'c') %>%
   as.data.frame()
 
 # Youth Players Load-----------------
@@ -640,11 +640,11 @@ for(d in 2){
 prev_ranks = player_ratings_df %>%
   filter(tourney == tourney_list[length(tourney_list) - 1]) %>% 
   select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
-  left_join(usar_players %>% 
-              {if(gender == 'women') filter(., Gender == 'Female') else .} %>% 
-              transmute(Name = toupper(`Full name`),
-                        `USA Player?`),
-            by = 'Name') %>% 
+  # left_join(usar_players %>%
+  #             {if(gender == 'women') filter(., Gender == 'Female') else .} %>%
+  #             transmute(Name = toupper(`Full name`),
+  #                      `USA Player?`),
+  #           by = 'Name') %>%
   filter(#`USA Player?` == 'Y',
          n_tourneys_curr_season > 1) %>%
   distinct() %>% 
