@@ -1,5 +1,8 @@
 name: Refresh Rankings
 
+on:
+  workflow_dispatch:
+
 jobs:
   refresh_rankings:
     runs-on: ubuntu-latest
