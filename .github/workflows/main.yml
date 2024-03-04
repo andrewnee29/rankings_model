@@ -1,15 +1,5 @@
 name: Refresh Rankings
 
-on:
-  workflow_dispatch:
-    inputs:
-      user:
-        description: 'GitHub username'
-        required: true
-      date:
-        description: 'Date of trigger'
-        required: true
-
 jobs:
   refresh_rankings:
     runs-on: ubuntu-latest
