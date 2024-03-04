@@ -47,7 +47,7 @@ sheet_scrape2 = read.csv('Tourney List.csv', as.is = T)
 
 # usar_players = read_sheet(eligible_players_sheet$id,
 #                          col_types = 'c') %>%
-  as.data.frame()
+#  as.data.frame()
 
 # Youth Players Load-----------------
 # Here we read a local csv with youth/DOB status of players. This is a terrible system and should be moved to google sheets at the very least. 
