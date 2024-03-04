@@ -37,7 +37,7 @@ jobs:
         run: Rscript Scripts/results_converter.R
 
       - name: Run Rankings Model & Generate New Rankings
-        run: Rscript "Scripts/fit models 1v2.R"
+        run: Rscript "Scripts/fit_models_1v2.R"
 
       - name: Stage Changes
         run: git add Predictions/*
@@ -46,6 +46,6 @@ jobs:
         run: |
           git config --local user.email '${{ github.actor }}@users.noreply.github.com'
           git config --local user.name '${{ github.actor }}'
-          commit_message="Rankings refresh on $date"
+          commit_message="Rankings refresh on $(date +"%Y-%m-%d")"
           git commit -m "$commit_message" || echo "No changes to commit"
           git push origin || echo "No changes to commit"
