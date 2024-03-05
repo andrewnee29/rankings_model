@@ -1,4 +1,4 @@
-name: Refresh Rankings
+name: Refresh Mixed Model Rankings
 
 on:
   workflow_dispatch:

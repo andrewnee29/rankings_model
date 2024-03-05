@@ -17,7 +17,8 @@ write_csvs = T
 
 # Preload----------------------
 # A custom preload script is sourced here to load in necessary packages and functions
-source('Scripts/Preload.R')
+# source('Scripts/Preload.R')
+source('Preload.R')
 
 
 # Seed Set-------------------
@@ -78,7 +79,7 @@ results = list()
 counter = 0
 #Looper
 for(d in 2){
-  # gender = c('women', 'open')[d]
+  gender = c('women', 'open')[d]
   for(ty in 1:1){
     target_years = list(2021:2024)[[ty]]
     # cat(target_years)
@@ -634,17 +635,15 @@ for(d in 2){
       }
     }
   }
-}
-
-# Create Previous Week rankings for trend tracking purposes ---------------------
-prev_ranks = player_ratings_df %>%
-  filter(tourney == tourney_list[length(tourney_list) - 1]) %>%
-  select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
-  # left_join(usar_players %>%
-  #             {if(gender == 'women') filter(., Gender == 'Female') else .} %>%
-  #             transmute(Name = toupper(`Full name`),
-  #                      `USA Player?`),
-  #           by = 'Name') %>%
+  # Create Previous Week rankings for trend tracking purposes ---------------------
+  prev_ranks = player_ratings_df %>%
+    filter(tourney == tourney_list[length(tourney_list) - 1]) %>%
+    select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
+    # left_join(usar_players %>%
+    #             {if(gender == 'women') filter(., Gender == 'Female') else .} %>%
+    #             transmute(Name = toupper(`Full name`),
+    #                      `USA Player?`),
+    #           by = 'Name') %>%
   filter(#`USA Player?` == 'Y',
          n_tourneys_curr_season > 1) %>%
   distinct() %>%
@@ -653,18 +652,18 @@ prev_ranks = player_ratings_df %>%
                                  TRUE ~ as.character(player_rank_t))) %>%
   select(Name, prev_rank = player_rank)
 
-# Bind previous week and convert to 100-scaled score rankings table ------------------
-ranks = player_ratings_df %>%
-  filter(tourney == 'END OF SEASON') %>%
-  select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
+  # Bind previous week and convert to 100-scaled score rankings table ------------------
+  ranks = player_ratings_df %>%
+    filter(tourney == 'END OF SEASON') %>%
+    select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
   # left_join(usar_players %>%
   #            {if(gender == 'women') filter(., Gender == 'Female') else .} %>%
   #             transmute(Name = toupper(`Full name`),
   #                       `USA Player?`),
   #           by = 'Name') %>%
-  filter(#`USA Player?` == 'Y',
+    filter(#`USA Player?` == 'Y',
          n_tourneys_curr_season > 1) %>%
-  mutate(player_rank_t = rank(-PAAWA),
+    mutate(player_rank_t = rank(-PAAWA),
          player_rank = case_when(player_rank_t %% 1 == .5 ~ paste0('T', floor(player_rank_t)),
                                  TRUE ~ as.character(player_rank_t)),
          adj_score = round(100 + 10*score, 2),
@@ -678,7 +677,7 @@ ranks = player_ratings_df %>%
 
 
 # Filter to youth and gender for youth rankings----------------------
-youth_ranks = player_ratings_df %>%
+  youth_ranks = player_ratings_df %>%
   filter(Name %in% youth_players$Name) %>%
   filter(tourney == 'END OF SEASON') %>%
   select(Name:PAAWA, wins_365:losses_365, n_tourneys_365, n_tourneys_curr_season, partner_strength:opp_strength) %>%
@@ -704,20 +703,20 @@ youth_ranks = player_ratings_df %>%
 
 
 #Write CSVs-----------------------
-
-if(write_csvs){
-  if(gender == 'women'){
-    readr::write_excel_csv(pred_df, file = 'Predictions/2023/Women/pred_1v2_df.csv')
-    readr::write_excel_csv(ranks, file = 'Predictions/2023/Women/player_ratings_1v2_df.csv')
-    readr::write_excel_csv(youth_ranks, file = 'Predictions/2023/Women/youth_player_ratings_1v2_df.csv')
-    readr::write_excel_csv(player_ratings_df, file = 'Predictions/2023/Women/player_ratings_1v2_df_full.csv')
-    readr::write_excel_csv(ranks, file = paste0('Predictions/2023/Women/player_ratings_1v2_df_', Sys.Date(), '.csv'))
+  if(write_csvs){
+    if(gender == 'women'){
+      readr::write_excel_csv(pred_df, file = 'Predictions/2023/Women/pred_1v2_df.csv')
+      readr::write_excel_csv(ranks, file = 'Predictions/2023/Women/player_ratings_1v2_df.csv')
+      readr::write_excel_csv(youth_ranks, file = 'Predictions/2023/Women/youth_player_ratings_1v2_df.csv')
+      readr::write_excel_csv(player_ratings_df, file = 'Predictions/2023/Women/player_ratings_1v2_df_full.csv')
+      readr::write_excel_csv(ranks, file = paste0('Predictions/2023/Women/player_ratings_1v2_df_', Sys.Date(), '.csv'))
   }
   if(gender == 'open'){
-    readr::write_excel_csv(pred_df, file = 'Predictions/2023/Open/pred_1v2_df.csv')
-    readr::write_excel_csv(ranks, file = 'Predictions/2023/Open/player_ratings_1v2_df.csv')
-    readr::write_excel_csv(youth_ranks, file = 'Predictions/2023/Open/youth_player_ratings_1v2_df.csv')
-    readr::write_excel_csv(player_ratings_df, file = 'Predictions/2023/Open/player_ratings_1v2_df_full.csv')
-    readr::write_excel_csv(ranks, file = paste0('Predictions/2023/Open/player_ratings_1v2_df_', Sys.Date(), '.csv'))
+      readr::write_excel_csv(pred_df, file = 'Predictions/2023/Open/pred_1v2_df.csv')
+      readr::write_excel_csv(ranks, file = 'Predictions/2023/Open/player_ratings_1v2_df.csv')
+      readr::write_excel_csv(youth_ranks, file = 'Predictions/2023/Open/youth_player_ratings_1v2_df.csv')
+      readr::write_excel_csv(player_ratings_df, file = 'Predictions/2023/Open/player_ratings_1v2_df_full.csv')
+      readr::write_excel_csv(ranks, file = paste0('Predictions/2023/Open/player_ratings_1v2_df_', Sys.Date(), '.csv'))
+    }
   }
 }
