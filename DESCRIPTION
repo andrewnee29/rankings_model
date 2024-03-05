@@ -1,0 +1,27 @@
+Package: USARRankings
+Type: Package
+Title: USAR Rankings
+Version: 1.0.0
+Description: USAR Mixed Model Rankings Method
+Authors@R:
+    person("Skylar", "Shibayama", email = "events@usaroundnet.org", role = c("aut", "cre"))
+    person("Matt", "Garbecki", email = "events@usaroundnet.org", role = "aut")
+    person("Jake", "Oxendine", email = "events@usaroundnet.org", role = "aut")
+    person("James", "Hyman", email = "events@usaroundnet.org", role = "aut")
+License: MIT + file LICENSE
+Imports:
+    RSelenium,
+    jsonlite,
+    rvest,
+    stringr,
+    dplyr,
+    tidyr,
+    tidyverse,
+    RecordLinkage,
+    DescTools,
+    plotly,
+    viridis,
+    lme4,
+    googlesheets4,
+    googledrive,
+    lubridate
