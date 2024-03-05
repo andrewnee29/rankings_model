@@ -12,13 +12,11 @@
 
 # USER INPUT: Gender----------------
 # User inputs gender here; 'women' or 'open'
-gender = 'open'
 write_csvs = T
 
 # Preload----------------------
 # A custom preload script is sourced here to load in necessary packages and functions
-# source('Scripts/Preload.R')
-source('Preload.R')
+source('Scripts/Preload.R')
 
 
 # Seed Set-------------------
@@ -676,7 +674,7 @@ for(d in 2){
   distinct()
 
 
-# Filter to youth and gender for youth rankings----------------------
+  # Filter to youth and gender for youth rankings----------------------
   youth_ranks = player_ratings_df %>%
   filter(Name %in% youth_players$Name) %>%
   filter(tourney == 'END OF SEASON') %>%
@@ -702,7 +700,7 @@ for(d in 2){
 
 
 
-#Write CSVs-----------------------
+  #Write CSVs-----------------------
   if(write_csvs){
     if(gender == 'women'){
       readr::write_excel_csv(pred_df, file = 'Predictions/2023/Women/pred_1v2_df.csv')
