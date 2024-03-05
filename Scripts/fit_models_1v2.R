@@ -76,7 +76,7 @@ pool_weight = 1
 results = list()
 counter = 0
 #Looper
-for(d in 2){
+for(d in 1:2){
   gender = c('women', 'open')[d]
   for(ty in 1:1){
     target_years = list(2021:2024)[[ty]]
